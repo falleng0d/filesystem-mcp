@@ -28,7 +28,7 @@ function normalizePath(p: string): string {
 }
 
 function expandHome(filepath: string): string {
-  if (filepath.startsWith('~/') || filepath === '~') {
+  if (filepath.startsWith('~/') || filepath.startsWith('~\\') || filepath === '~') {
     return path.join(os.homedir(), filepath.slice(1));
   }
   return filepath;
