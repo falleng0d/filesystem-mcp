@@ -131,6 +131,25 @@ Add this to your `claude_desktop_config.json`:
 Note: you can provide sandboxed directories to the server by mounting them to `/projects`.
 Adding the `ro` flag will make the directory readonly by the server.
 
+### Windows
+
+```json
+{
+  "mcpServers": {
+    "filesystem": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@matj.dev/filesystem-mcp",
+        "--tools",
+        "read_file,read_multiple_files",
+        "C:\\Projects"
+      ]
+    }
+  }
+}
+```
+
 ### Docker
 
 Note: all directories must be mounted to `/projects` by default.
