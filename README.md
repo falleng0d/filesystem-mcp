@@ -5,7 +5,7 @@ Node.js server implementing Model Context Protocol (MCP) for filesystem operatio
 This repository is a fork of [modelcontextprotocol/servers](https://github.com/modelcontextprotocol/servers)
 with everything removed except for the filesystem server.
 
-This fork introduces better windows compatibility and a few other improvements.
+This fork introduces better **Windows** compatibility and a few other improvements.
 
 ## Features
 
