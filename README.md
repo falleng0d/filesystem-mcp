@@ -124,6 +124,15 @@ Add this to your `mcp_config.json`:
 }
 ```
 
+Then on your `global_rules.md`, instruct Windsurf to use the MCP server:
+
+```markdown
+# Tools
+
+- When reading files use the  `read_file` tool from the filesystem MCP.
+- When reading multiple files use the `read_multiple_files` tool from the filesystem MCP
+```
+
 ## Usage with Claude Desktop
 
 Add this to your `claude_desktop_config.json`:
