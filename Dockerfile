@@ -2,8 +2,9 @@ FROM node:22.12-alpine AS builder
 
 WORKDIR /app
 
-COPY src /app
-COPY tsconfig.json /tsconfig.json
+COPY src ./src
+COPY tsconfig.json .
+COPY package.json .
 
 RUN --mount=type=cache,target=/root/.npm npm install
 
