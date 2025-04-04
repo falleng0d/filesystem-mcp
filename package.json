@@ -1,11 +1,11 @@
 {
-  "name": "filesystem-mcp",
-  "version": "0.6.2",
+  "name": "@matj.dev/filesystem-mcp",
+  "version": "0.6.3",
   "description": "MCP server for filesystem access",
   "license": "MIT",
   "author": "Mateus Junior <mateus@matj.dev>, Anthropic, PBC (https://anthropic.com)",
   "homepage": "https://modelcontextprotocol.io",
-  "bugs": "https://github.com/modelcontextprotocol/servers/issues",
+  "bugs": "https://github.com/falleng0d/filesystem-mcp/issues",
   "type": "module",
   "bin": {
     "mcp-server-filesystem": "dist/index.js"
