@@ -103,6 +103,27 @@ This fork introduces better **Windows** compatibility and a few other improvemen
     - Returns:
         - Directories that this server can read/write from
 
+## Usage with Windsurf IDE on Windows
+
+Add this to your `mcp_config.json`:
+
+```json
+{
+  "mcpServers": {
+    "filesystem": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@matj.dev/filesystem-mcp",
+        "--tools",
+        "read_file,read_multiple_files",
+        "C:\\Projects"
+      ]
+    }
+  }
+}
+```
+
 ## Usage with Claude Desktop
 
 Add this to your `claude_desktop_config.json`:
