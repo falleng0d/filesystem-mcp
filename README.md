@@ -14,6 +14,7 @@ This fork introduces better **Windows** compatibility and a few other improvemen
 - Move files/directories
 - Search files
 - Get file metadata
+- Allow only certain tools to be used
 
 **Note**: The server will only allow operations within directories specified via `args`.
 
@@ -142,7 +143,9 @@ Note: all directories must be mounted to `/projects` by default.
       "command": "npx",
       "args": [
         "-y",
-        "@modelcontextprotocol/server-filesystem",
+        "@matj.dev/filesystem-mcp",
+        "--tools",
+        "read_file,read_multiple_files",
         "/Users/username/Desktop",
         "/path/to/other/allowed/dir"
       ]
