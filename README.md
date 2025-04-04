@@ -1,101 +1,166 @@
-# Model Context Protocol Filesystem Server
+# Filesystem MCP Server
 
-This repository is a fork of (modelcontextprotocol/servers)[https://github.com/modelcontextprotocol/servers]
-with everything removed except for the [filesystem](src/filesystem) server.
+Node.js server implementing Model Context Protocol (MCP) for filesystem operations.
+
+This repository is a fork of [modelcontextprotocol/servers](https://github.com/modelcontextprotocol/servers)
+with everything removed except for the filesystem server.
 
 This fork introduces better windows compatibility and a few other improvements.
 
-## 🚀 Getting Started
+## Features
 
-### Using MCP Servers in this Repository
+- Read/write files
+- Create/list/delete directories
+- Move files/directories
+- Search files
+- Get file metadata
 
-Typescript-based servers in this repository can be used directly with `npx`.
+**Note**: The server will only allow operations within directories specified via `args`.
 
-For example, this will start the [Memory](src/memory) server:
-```sh
-npx -y @modelcontextprotocol/server-memory
-```
+## API
 
-Python-based servers in this repository can be used directly with [`uvx`](https://docs.astral.sh/uv/concepts/tools/) or [`pip`](https://pypi.org/project/pip/). `uvx` is recommended for ease of use and setup.
+### Resources
 
-For example, this will start the [Git](src/git) server:
-```sh
-# With uvx
-uvx mcp-server-git
+- `file://system`: File system operations interface
 
-# With pip
-pip install mcp-server-git
-python -m mcp_server_git
-```
+### Tools
 
-Follow [these](https://docs.astral.sh/uv/getting-started/installation/) instructions to install `uv` / `uvx` and [these](https://pip.pypa.io/en/stable/installation/) to install `pip`.
+- **read_file**
+    - Read complete contents of a file
+    - Input: `path` (string)
+    - Reads complete file contents with UTF-8 encoding
 
-### Using an MCP Client
-However, running a server on its own isn't very useful, and should instead be configured into an MCP client. For example, here's the Claude Desktop configuration to use the above server:
+- **read_multiple_files**
+    - Read multiple files simultaneously
+    - Input: `paths` (string[])
+    - Failed reads won't stop the entire operation
+
+- **write_file**
+    - Create new file or overwrite existing (exercise caution with this)
+    - Inputs:
+        - `path` (string): File location
+        - `content` (string): File content
+
+- **edit_file**
+    - Make selective edits using advanced pattern matching and formatting
+    - Features:
+        - Line-based and multi-line content matching
+        - Whitespace normalization with indentation preservation
+        - Multiple simultaneous edits with correct positioning
+        - Indentation style detection and preservation
+        - Git-style diff output with context
+        - Preview changes with dry run mode
+    - Inputs:
+        - `path` (string): File to edit
+        - `edits` (array): List of edit operations
+            - `oldText` (string): Text to search for (can be substring)
+            - `newText` (string): Text to replace with
+        - `dryRun` (boolean): Preview changes without applying (default: false)
+    - Returns detailed diff and match information for dry runs, otherwise applies changes
+    - Best Practice: Always use dryRun first to preview changes before applying them
+
+- **create_directory**
+    - Create new directory or ensure it exists
+    - Input: `path` (string)
+    - Creates parent directories if needed
+    - Succeeds silently if directory exists
+
+- **list_directory**
+    - List directory contents with [FILE] or [DIR] prefixes
+    - Input: `path` (string)
+
+- **move_file**
+    - Move or rename files and directories
+    - Inputs:
+        - `source` (string)
+        - `destination` (string)
+    - Fails if destination exists
+
+- **search_files**
+    - Recursively search for files/directories
+    - Inputs:
+        - `path` (string): Starting directory
+        - `pattern` (string): Search pattern
+        - `excludePatterns` (string[]): Exclude any patterns. Glob formats are supported.
+    - Case-insensitive matching
+    - Returns full paths to matches
+
+- **get_file_info**
+    - Get detailed file/directory metadata
+    - Input: `path` (string)
+    - Returns:
+        - Size
+        - Creation time
+        - Modified time
+        - Access time
+        - Type (file/directory)
+        - Permissions
+
+- **list_allowed_directories**
+    - List all directories the server is allowed to access
+    - No input required
+    - Returns:
+        - Directories that this server can read/write from
+
+## Usage with Claude Desktop
+
+Add this to your `claude_desktop_config.json`:
+
+Note: you can provide sandboxed directories to the server by mounting them to `/projects`.
+Adding the `ro` flag will make the directory readonly by the server.
+
+### Docker
+
+Note: all directories must be mounted to `/projects` by default.
 
 ```json
 {
   "mcpServers": {
-    "memory": {
-      "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-memory"]
+    "filesystem": {
+      "command": "docker",
+      "args": [
+        "run",
+        "-i",
+        "--rm",
+        "--mount", "type=bind,src=/Users/username/Desktop,dst=/projects/Desktop",
+        "--mount", "type=bind,src=/path/to/other/allowed/dir,dst=/projects/other/allowed/dir,ro",
+        "--mount", "type=bind,src=/path/to/file.txt,dst=/projects/path/to/file.txt",
+        "mcp/filesystem",
+        "/projects"
+      ]
     }
   }
 }
 ```
 
-Additional examples of using the Claude Desktop as an MCP client might look like:
+### NPX
 
 ```json
 {
   "mcpServers": {
     "filesystem": {
       "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-filesystem", "/path/to/allowed/files"]
-    },
-    "git": {
-      "command": "uvx",
-      "args": ["mcp-server-git", "--repository", "path/to/git/repo"]
-    },
-    "github": {
-      "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-github"],
-      "env": {
-        "GITHUB_PERSONAL_ACCESS_TOKEN": "<YOUR_TOKEN>"
-      }
-    },
-    "postgres": {
-      "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-postgres", "postgresql://localhost/mydb"]
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-filesystem",
+        "/Users/username/Desktop",
+        "/path/to/other/allowed/dir"
+      ]
     }
   }
 }
 ```
 
-## 🛠️ Creating Your Own Server
+## Build
 
-Interested in creating your own MCP server? Visit the official documentation at [modelcontextprotocol.io](https://modelcontextprotocol.io/introduction) for comprehensive guides, best practices, and technical details on implementing MCP servers.
+Docker build:
 
-## 🤝 Contributing
+```bash
+docker build .
+```
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for information about contributing to this repository.
+## License
 
-## 🔒 Security
-
-See [SECURITY.md](SECURITY.md) for reporting security vulnerabilities.
-
-## 📜 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## 💬 Community
-
-- [GitHub Discussions](https://github.com/orgs/modelcontextprotocol/discussions)
-
-## ⭐ Support
-
-If you find MCP servers useful, please consider starring the repository and contributing new servers or improvements!
-
----
-
-Managed by Anthropic, but built together with the community. The Model Context Protocol is open source and we encourage everyone to contribute their own servers and improvements!
+This MCP server is licensed under the MIT License. This means you are free to use, modify,
+and distribute the software, subject to the terms and conditions of the MIT License. For
+more details, please see the LICENSE file in the project repository.
