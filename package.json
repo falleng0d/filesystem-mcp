@@ -16,7 +16,8 @@
   "scripts": {
     "build": "tsc && shx chmod +x dist/*.js",
     "prepare": "npm run build",
-    "watch": "tsc --watch"
+    "watch": "tsc --watch",
+    "version": "conventional-changelog -p angular -i CHANGELOG.md -s && git add CHANGELOG.md"
   },
   "repository": {
     "type": "git",
@@ -33,6 +34,7 @@
     "@types/diff": "^5.0.9",
     "@types/minimatch": "^5.1.2",
     "@types/node": "^22",
+    "conventional-changelog-cli": "^5.0.0",
     "shx": "^0.3.4",
     "typescript": "^5.3.3"
   }
