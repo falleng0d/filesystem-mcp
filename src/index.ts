@@ -103,7 +103,7 @@ await Promise.all(directoryArgs.map(async (dir) => {
 
 // Security utilities
 async function validatePath(requestedPath: string): Promise<string> {
-  if (os.platform() === 'win32' && /^[a-zA-Z]:\\/.test(requestedPath)) {
+  if (os.platform() === 'win32' && /^[a-zA-Z]:/.test(requestedPath)) {
     const driveLetter = requestedPath.charAt(0).toUpperCase();
     const restOfPath = requestedPath.slice(1);
     requestedPath = driveLetter + restOfPath;
