@@ -152,7 +152,8 @@ Adding the `ro` flag will make the directory readonly by the server.
         "@matj.dev/filesystem-mcp",
         "--tools",
         "read_file,read_multiple_files",
-        "C:\\Projects"
+        "C:\\Projects",
+        "\"C:\\usr\\a b\""
       ]
     }
   }

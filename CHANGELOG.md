@@ -1,3 +1,12 @@
+## [0.6.5](https://github.com/falleng0d/filesystem-mcp/compare/0.6.4...0.6.5) (2025-04-08)
+
+
+### Bug Fixes
+
+* improve path validation for Windows platform ([1ef3bbc](https://github.com/falleng0d/filesystem-mcp/commit/1ef3bbc94e07e88c306f68bd403a9403930e20d7))
+
+
+
 ## [0.6.4](https://github.com/falleng0d/filesystem-mcp/compare/0.6.3...0.6.4) (2025-04-04)
 
 
