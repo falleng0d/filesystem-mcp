@@ -33,7 +33,12 @@ This fork introduces better **Windows** compatibility and a few other improvemen
 
 - **read_multiple_files**
     - Read multiple files simultaneously
-    - Input: `paths` (string[])
+    - Inputs:
+        - `paths` (string[]): List of file paths or glob patterns
+        - `basePath` (string, optional): Base path to prepend to each path in the paths array
+    - Automatically detects and expands glob patterns (paths containing *, ?, [, ], {, }, !)
+    - Supports glob patterns like `*.js` or `src/**/*.ts`
+    - Works with Windows paths
     - Failed reads won't stop the entire operation
 
 - **write_file**

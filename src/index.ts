@@ -14,6 +14,7 @@ import { z } from "zod";
 import { zodToJsonSchema } from "zod-to-json-schema";
 import { createTwoFilesPatch } from 'diff';
 import { minimatch } from 'minimatch';
+import { glob } from 'glob';
 
 // Valid tools schema
 const ValidToolSchema = z.string().refine((tool) => {
@@ -156,6 +157,8 @@ const ReadFileArgsSchema = z.object({
 
 const ReadMultipleFilesArgsSchema = z.object({
   paths: z.array(z.string()),
+  basePath: z.string().optional().default('')
+    .describe('Base path to prepend to each file path'),
 });
 
 const WriteFileArgsSchema = z.object({
@@ -228,6 +231,51 @@ const server = new Server(
 );
 
 // Tool implementations
+
+// Helper function to check if a path contains glob patterns
+// Checks for common glob characters: *, ?, [, ], {, }, !
+function isGlobPattern(filePath: string): boolean {
+  return /[*?\[\]{}!]/.test(filePath);
+}
+
+async function expandGlobPatterns(patterns: string[], basePath: string): Promise<string[]> {
+  const allFiles: string[] = [];
+
+  for (const pattern of patterns) {
+    let normalizedPattern = pattern;
+    let baseDirForGlob = basePath ? basePath : process.cwd();
+
+    if (os.platform() === 'win32' && /^[a-zA-Z]:/.test(pattern)) {
+      const driveLetter = pattern.charAt(0).toUpperCase() + ':' + path.sep;
+      baseDirForGlob = driveLetter + path.sep;
+
+      normalizedPattern = pattern.slice(2);
+      if (normalizedPattern.startsWith(path.sep)) {
+        normalizedPattern = normalizedPattern.slice(1);
+      }
+    } else if (path.isAbsolute(pattern)) {
+      baseDirForGlob = path.parse(pattern).root;
+      normalizedPattern = pattern.slice(baseDirForGlob.length);
+    }
+
+    const matches = await glob(normalizedPattern, {
+      absolute: true,
+      cwd: baseDirForGlob,
+      dot: true,
+      nodir: true,
+      windowsPathsNoEscape: true,
+      ignore: ['**/node_modules/**', '**/dist/**', '**/build/**', '**/out/**', '**/vendor/**'],
+    });
+
+    for (const match of matches) {
+      await validatePath(match);
+      allFiles.push(match);
+    }
+  }
+
+  return allFiles;
+}
+
 async function getFileStats(filePath: string): Promise<FileInfo> {
   const stats = await fs.stat(filePath);
   return {
@@ -403,7 +451,10 @@ let tools = [
       "efficient than reading files one by one when you need to analyze " +
       "or compare multiple files. Each file's content is returned with its " +
       "path as a reference. Failed reads for individual files won't stop " +
-      "the entire operation.",
+      "the entire operation. Supports glob patterns - any path " +
+      "containing *, ?, [, ], {, }, or ! characters will be treated as a glob pattern, " +
+      "allowing you to match multiple files with wildcards like *.js or src/**/*.ts. " +
+      "Optionally accepts a basePath parameter that will be prepended to each path in the paths array.",
     inputSchema: zodToJsonSchema(ReadMultipleFilesArgsSchema) as ToolInput,
   },
   {
@@ -523,10 +574,50 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         if (!parsed.success) {
           throw new Error(`Invalid arguments for read_multiple_files: ${parsed.error}`);
         }
+
+        // Get the base path if provided
+        const basePath = parsed.data.basePath || '';
+
+        // Separate glob patterns from regular paths
+        const globPatterns: string[] = [];
+        const regularPaths: string[] = [];
+
+        // Automatically detect glob patterns by the presence of glob characters
+        for (const filePath of parsed.data.paths) {
+          // Prepend base path if it exists
+          const fullPath = basePath ? path.join(basePath, filePath) : filePath;
+
+          if (isGlobPattern(fullPath)) {
+            globPatterns.push(fullPath);
+          } else {
+            regularPaths.push(fullPath);
+          }
+        }
+
+        // Collect all paths to process
+        let filePaths: string[] = [...regularPaths];
+
+        // Process glob patterns, if any, exist
+        if (globPatterns.length > 0) {
+          const expandedPaths = await expandGlobPatterns(globPatterns, basePath);
+          filePaths = [...filePaths, ...expandedPaths];
+
+          // If no files matched the glob patterns, return a warning
+          if (expandedPaths.length === 0 && regularPaths.length === 0) {
+            return {
+              content: [{ type: "text", text: "No files matched the provided glob patterns" }],
+              isError: true,
+            };
+          }
+        }
+
         const results = await Promise.all(
-          parsed.data.paths.map(async (filePath: string) => {
+          filePaths.map(async (filePath: string) => {
             try {
-              const validPath = await validatePath(filePath);
+              // For regular paths, we need to validate them
+              // Paths from glob expansion are already validated
+              const isFromGlob = !regularPaths.includes(filePath);
+              const validPath = isFromGlob ? filePath : await validatePath(filePath);
               const content = await fs.readFile(validPath, "utf-8");
               return `${filePath}:\n${content}\n`;
             } catch (error) {
@@ -535,6 +626,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
             }
           }),
         );
+
         return {
           content: [{ type: "text", text: results.join("\n---\n") }],
         };
