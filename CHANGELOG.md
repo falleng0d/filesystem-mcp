@@ -1,3 +1,12 @@
+## [0.6.6](https://github.com/falleng0d/filesystem-mcp/compare/0.6.5...0.6.6) (2025-05-23)
+
+
+### Features
+
+* add support for glob patterns in read_multiple_files tool ([0703363](https://github.com/falleng0d/filesystem-mcp/commit/07033636f909b8181eff60f6226794847b94daf0))
+
+
+
 ## [0.6.5](https://github.com/falleng0d/filesystem-mcp/compare/0.6.4...0.6.5) (2025-04-08)
 
 
